@@ -1,5 +1,5 @@
 name: LiveMarket
-version: 1.2.6
+version: 1.2.7
 main: me.livemarket.LiveMarketPlugin
 api-version: "1.21"
 depend: [Vault]
@@ -13,6 +13,11 @@ commands:
     description: Show current item price
     usage: /price <material>
     permission: livemarket.price
+
+  lmgen:
+    description: Generate items config file (generated-items.yml)
+    usage: /lmgen [countPerCategory]
+    permission: livemarket.admin
 
 permissions:
   livemarket.shop.open:

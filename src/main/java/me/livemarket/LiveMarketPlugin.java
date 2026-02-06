@@ -3,6 +3,7 @@ package me.livemarket;
 import me.livemarket.db.MarketDatabase;
 import me.livemarket.market.MarketService;
 import me.livemarket.ui.ShopUI;
+import me.livemarket.GenerateCommand;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -44,6 +45,7 @@ public final class LiveMarketPlugin extends JavaPlugin {
         });
 
         getCommand("price").setExecutor(new PriceCommand(market));
+        getCommand("lmgen").setExecutor(new GenerateCommand(this));
 
         Bukkit.getPluginManager().registerEvents(shopUI, this);
 

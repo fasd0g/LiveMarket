@@ -1,4 +1,4 @@
-# LiveMarket (Paper 1.21.1 + Vault) — v1.2.6
+# LiveMarket (Paper 1.21.1 + Vault) — v1.2.7
 
 ## Фичи
 - `/shop` GUI: 6 категорий (armor/food/tools/ores/blocks/misc)
@@ -15,3 +15,7 @@
 ## Зависимости
 - Vault
 - Любая экономика (EssentialsX, CMI, ...)
+
+## Генератор предметов
+- Команда: `/lmgen [countPerCategory]` (требует `livemarket.admin`)
+- Создаёт файл `plugins/LiveMarket/generated-items.yml`
