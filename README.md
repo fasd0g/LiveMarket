@@ -20,3 +20,5 @@
 
 ## Permissions
 Все permissions перечислены в `plugin.yml`, их описание — в `config.yml` (permissionsDescriptions).
+
+- Микро-обновление цены после каждой сделки (чтобы sell/buy реагировали сразу)

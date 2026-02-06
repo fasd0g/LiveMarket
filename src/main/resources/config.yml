@@ -26,6 +26,10 @@ settings:
     sellMultiplier: 0.85
     clickCooldownMs: 250
 
+
+    instantAdjustment:
+      enabled: true
+      maxStepPerTrade: 0.01
     # доп. удешевление SELL если предмет часто продают
     sellPressure:
       enabled: true

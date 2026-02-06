@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -21,11 +22,36 @@ public class ShopUI implements Listener {
     private final JavaPlugin plugin;
     private final MarketService market;
 
+    private final Map<UUID, String> viewerCategories = new HashMap<>();
+    private int refreshTaskId = -1;
+
     private static final int BACK_SLOT = 49;
 
     public ShopUI(JavaPlugin plugin, MarketService market) {
         this.plugin = plugin;
         this.market = market;
+        startRefreshTask();
+    }
+
+    private void startRefreshTask() {
+        // раз в 1 секунду обновляем лор (таймер) у открытых меню рынка
+        refreshTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            if (viewerCategories.isEmpty()) return;
+            for (UUID id : new ArrayList<>(viewerCategories.keySet())) {
+                Player p = Bukkit.getPlayer(id);
+                if (p == null || !p.isOnline()) { viewerCategories.remove(id); continue; }
+                if (!(p.getOpenInventory().getTopInventory().getHolder() instanceof MarketHolder holder)) {
+                    viewerCategories.remove(id);
+                    continue;
+                }
+                // перерисуем содержимое (дёшево: только изменяем items на их слотах)
+                if (holder.getCategory() == null) {
+                    refreshMain(p);
+                } else {
+                    refreshCategory(p, holder.getCategory());
+                }
+            }
+        }, 20L, 20L);
     }
 
     public void openMain(Player p) {
@@ -43,6 +69,7 @@ public class ShopUI implements Listener {
 
         addAuctionButton(inv, p);
 
+        viewerCategories.put(p.getUniqueId(), cat.key());
         p.openInventory(inv);
     }
 
@@ -51,7 +78,7 @@ public class ShopUI implements Listener {
         ItemMeta meta = is.getItemMeta();
         if (meta != null) {
             meta.setDisplayName("§a" + cat.title());
-            meta.setLore(List.of("§7Открыть категорию"));
+            meta.setLore(List.of("§7Открыть категорию", "§7До обновления: §f" + market.getTimeUntilNextUpdateString()));
             is.setItemMeta(meta);
         }
         return is;
@@ -105,6 +132,7 @@ public class ShopUI implements Listener {
         inv.setItem(BACK_SLOT, backButton());
         addAuctionButton(inv, p);
 
+        viewerCategories.put(p.getUniqueId(), cat.key());
         p.openInventory(inv);
     }
 
@@ -132,6 +160,7 @@ public class ShopUI implements Listener {
             lore.add("§7Sell: §f" + market.format(sell) + " §8(учтёт прочность)");
             lore.add("§7Trend: " + it.getTrendArrow() + " " + it.getTrendPercentString());
             lore.add("§7Stock: §f" + it.getStock() + " §7/ §f" + it.getStockTarget());
+            lore.add("§7До обновления: §f" + market.getTimeUntilNextUpdateString());
             lore.add("");
 
             if (it.getStock() <= 0) {
@@ -148,6 +177,13 @@ public class ShopUI implements Listener {
             is.setItemMeta(meta);
         }
         return is;
+    }
+
+    @EventHandler
+    public void onClose(InventoryCloseEvent e) {
+        if (e.getPlayer() instanceof Player p) {
+            viewerCategories.remove(p.getUniqueId());
+        }
     }
 
     @EventHandler

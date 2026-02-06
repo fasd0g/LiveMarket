@@ -38,6 +38,8 @@ public class MarketService {
     private long cooldownMs;
 
     private boolean sellPressureEnabled;
+    private boolean instantAdjustEnabled;
+    private double instantMaxStepPerTrade;
     private double sellPressureK;
     private double sellPressureMinMultiplier;
 
@@ -63,6 +65,9 @@ public class MarketService {
         sellPressureEnabled = cfg.getBoolean("settings.update.sellPressure.enabled", true);
         sellPressureK = cfg.getDouble("settings.update.sellPressure.k", 0.18);
         sellPressureMinMultiplier = cfg.getDouble("settings.update.sellPressure.minMultiplier", 0.55);
+
+        instantAdjustEnabled = cfg.getBoolean("settings.update.instantAdjustment.enabled", true);
+        instantMaxStepPerTrade = cfg.getDouble("settings.update.instantAdjustment.maxStepPerTrade", 0.01);
 
         String zone = cfg.getString("settings.updateTime.zoneId", "Europe/Moscow");
         zoneId = ZoneId.of(zone);
@@ -153,7 +158,27 @@ public class MarketService {
         return true;
     }
 
-    // ===== ежедневное обновление рынка =====
+    
+// ===== таймер до следующего обновления =====
+
+/** Возвращает строку HH:mm:ss до следующего обновления (22:00 МСК по умолчанию). */
+public String getTimeUntilNextUpdateString() {
+    long seconds = secondsUntilNextUpdate();
+    long h = seconds / 3600;
+    long m = (seconds % 3600) / 60;
+    long s = seconds % 60;
+    return String.format("%02d:%02d:%02d", h, m, s);
+}
+
+public long secondsUntilNextUpdate() {
+    ZonedDateTime now = ZonedDateTime.now(zoneId);
+    ZonedDateTime next = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0);
+    if (!next.isAfter(now)) next = next.plusDays(1);
+    Duration d = Duration.between(now.toInstant(), next.toInstant());
+    return Math.max(0, d.getSeconds());
+}
+
+// ===== ежедневное обновление рынка =====
 
     public void scheduleDailyUpdateAtMoscowTime() {
         long delayTicks = ticksUntilNextUpdate();
@@ -215,6 +240,30 @@ public class MarketService {
         it.setPrice(next);
 
         it.decayEma(0.15);
+    }
+
+    /**
+     * Микро-обновление цены сразу после сделки, чтобы игроки видели реакцию рынка моментально.
+     * Использует тот же таргет, но меньший шаг.
+     */
+    private void updatePriceWithStep(MarketItem it, double step) {
+        double buy = it.getBuyEma();
+        double sell = it.getSellEma();
+        double ratio = (buy + 1.0) / (sell + 1.0);
+        double demandFactor = Math.pow(ratio, kDemand);
+
+        int stock = it.getStock();
+        int target = it.getStockTarget();
+        double stockFactor = Math.pow(((target + 1.0) / (stock + 1.0)), sStock);
+
+        double targetPrice = it.getBasePrice() * demandFactor * stockFactor;
+        targetPrice = clamp(targetPrice, it.getMinPrice(), it.getMaxPrice());
+
+        double cur = it.getPrice();
+        double maxDelta = Math.abs(cur * step);
+        double delta = clamp(targetPrice - cur, -maxDelta, maxDelta);
+        double next = clamp(cur + delta, it.getMinPrice(), it.getMaxPrice());
+        it.setPrice(next);
     }
 
     private double clamp(double v, double mn, double mx) {
@@ -279,6 +328,9 @@ public class MarketService {
         synchronized (it) {
             it.setStock(it.getStock() - qty);
             it.addBuyVolume(qty);
+            if (instantAdjustEnabled) {
+                updatePriceWithStep(it, instantMaxStepPerTrade);
+            }
         }
 
         p.sendMessage("§aКуплено: §f" + qty + " " + it.getMaterial() + " §7за §f" + format(cost));
@@ -311,6 +363,9 @@ public class MarketService {
         synchronized (it) {
             it.setStock(it.getStock() + rr.removed);
             it.addSellVolume(rr.removed);
+            if (instantAdjustEnabled) {
+                updatePriceWithStep(it, instantMaxStepPerTrade);
+            }
         }
 
         p.sendMessage("§aПродано: §f" + rr.removed + " " + it.getMaterial()
