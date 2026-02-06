@@ -22,10 +22,11 @@ public class ShopUI implements Listener {
     private final JavaPlugin plugin;
     private final MarketService market;
 
+    private static final int BACK_SLOT = 49;
+
+    /** Игрок -> открытая категория (null = главное меню). */
     private final Map<UUID, String> viewerCategories = new HashMap<>();
     private int refreshTaskId = -1;
-
-    private static final int BACK_SLOT = 49;
 
     public ShopUI(JavaPlugin plugin, MarketService market) {
         this.plugin = plugin;
@@ -34,17 +35,21 @@ public class ShopUI implements Listener {
     }
 
     private void startRefreshTask() {
-        // раз в 1 секунду обновляем лор (таймер) у открытых меню рынка
+        // Раз в секунду обновляем таймер (и цены/склад) в открытом GUI.
         refreshTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             if (viewerCategories.isEmpty()) return;
+
             for (UUID id : new ArrayList<>(viewerCategories.keySet())) {
                 Player p = Bukkit.getPlayer(id);
-                if (p == null || !p.isOnline()) { viewerCategories.remove(id); continue; }
+                if (p == null || !p.isOnline()) {
+                    viewerCategories.remove(id);
+                    continue;
+                }
                 if (!(p.getOpenInventory().getTopInventory().getHolder() instanceof MarketHolder holder)) {
                     viewerCategories.remove(id);
                     continue;
                 }
-                // перерисуем содержимое (дёшево: только изменяем items на их слотах)
+
                 if (holder.getCategory() == null) {
                     refreshMain(p);
                 } else {
@@ -69,51 +74,8 @@ public class ShopUI implements Listener {
 
         addAuctionButton(inv, p);
 
-        viewerCategories.put(p.getUniqueId(), cat.key());
+        viewerCategories.put(p.getUniqueId(), null);
         p.openInventory(inv);
-    }
-
-    private ItemStack buildCategoryItem(CategoryDef cat) {
-        ItemStack is = new ItemStack(cat.icon());
-        ItemMeta meta = is.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName("§a" + cat.title());
-            meta.setLore(List.of("§7Открыть категорию", "§7До обновления: §f" + market.getTimeUntilNextUpdateString()));
-            is.setItemMeta(meta);
-        }
-        return is;
-    }
-
-    private void addAuctionButton(Inventory inv, Player p) {
-        FileConfiguration cfg = plugin.getConfig();
-        if (!cfg.getBoolean("settings.gui.auctionButton.enabled", true)) return;
-        if (!p.hasPermission("livemarket.auction")) return;
-
-        int slot = cfg.getInt("settings.gui.auctionButton.slot", 53);
-        if (slot < 0 || slot >= inv.getSize()) return;
-
-        Material icon;
-        try {
-            icon = Material.valueOf(cfg.getString("settings.gui.auctionButton.icon", "GOLD_INGOT").toUpperCase());
-        } catch (Exception e) {
-            icon = Material.GOLD_INGOT;
-        }
-
-        ItemStack is = new ItemStack(icon);
-        ItemMeta meta = is.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(cfg.getString("settings.gui.auctionButton.name", "§6Аукцион"));
-            List<String> lore = cfg.getStringList("settings.gui.auctionButton.lore");
-            if (lore != null && !lore.isEmpty()) meta.setLore(lore);
-            is.setItemMeta(meta);
-        }
-
-        inv.setItem(slot, is);
-    }
-
-    private int normalizeSize(int size) {
-        size = Math.max(9, Math.min(54, size));
-        return (size / 9) * 9;
     }
 
     public void openCategory(Player p, CategoryDef cat) {
@@ -125,7 +87,7 @@ public class ShopUI implements Listener {
 
         for (MarketItem it : market.getByCategory(cat.key())) {
             int slot = it.getSlot();
-            if (slot < 0 || slot >= size) continue;
+            if (slot < 0 || slot >= inv.getSize()) continue;
             inv.setItem(slot, buildMarketItem(it));
         }
 
@@ -136,11 +98,40 @@ public class ShopUI implements Listener {
         p.openInventory(inv);
     }
 
-    private ItemStack backButton() {
-        ItemStack is = new ItemStack(Material.ARROW);
+    private void refreshMain(Player p) {
+        Inventory inv = p.getOpenInventory().getTopInventory();
+
+        for (CategoryDef cat : market.getCategories().values()) {
+            if (!p.hasPermission(cat.permission())) continue;
+            if (cat.slot() < 0 || cat.slot() >= inv.getSize()) continue;
+            inv.setItem(cat.slot(), buildCategoryItem(cat));
+        }
+
+        addAuctionButton(inv, p);
+    }
+
+    private void refreshCategory(Player p, String categoryKey) {
+        Inventory inv = p.getOpenInventory().getTopInventory();
+
+        for (MarketItem it : market.getByCategory(categoryKey)) {
+            int slot = it.getSlot();
+            if (slot < 0 || slot >= inv.getSize()) continue;
+            inv.setItem(slot, buildMarketItem(it));
+        }
+
+        inv.setItem(BACK_SLOT, backButton());
+        addAuctionButton(inv, p);
+    }
+
+    private ItemStack buildCategoryItem(CategoryDef cat) {
+        ItemStack is = new ItemStack(cat.icon());
         ItemMeta meta = is.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("§eНазад");
+            meta.setDisplayName("§a" + cat.title());
+            meta.setLore(List.of(
+                    "§7Открыть категорию",
+                    "§7До обновления: §f" + market.getTimeUntilNextUpdateString()
+            ));
             is.setItemMeta(meta);
         }
         return is;
@@ -179,6 +170,48 @@ public class ShopUI implements Listener {
         return is;
     }
 
+    private ItemStack backButton() {
+        ItemStack is = new ItemStack(Material.ARROW);
+        ItemMeta meta = is.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName("§eНазад");
+            is.setItemMeta(meta);
+        }
+        return is;
+    }
+
+    private void addAuctionButton(Inventory inv, Player p) {
+        FileConfiguration cfg = plugin.getConfig();
+        if (!cfg.getBoolean("settings.gui.auctionButton.enabled", true)) return;
+        if (!p.hasPermission("livemarket.auction")) return;
+
+        int slot = cfg.getInt("settings.gui.auctionButton.slot", 53);
+        if (slot < 0 || slot >= inv.getSize()) return;
+
+        Material icon;
+        try {
+            icon = Material.valueOf(cfg.getString("settings.gui.auctionButton.icon", "GOLD_INGOT").toUpperCase());
+        } catch (Exception e) {
+            icon = Material.GOLD_INGOT;
+        }
+
+        ItemStack is = new ItemStack(icon);
+        ItemMeta meta = is.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(cfg.getString("settings.gui.auctionButton.name", "§6Аукцион"));
+            List<String> lore = cfg.getStringList("settings.gui.auctionButton.lore");
+            if (lore != null && !lore.isEmpty()) meta.setLore(lore);
+            is.setItemMeta(meta);
+        }
+
+        inv.setItem(slot, is);
+    }
+
+    private int normalizeSize(int size) {
+        size = Math.max(9, Math.min(54, size));
+        return (size / 9) * 9;
+    }
+
     @EventHandler
     public void onClose(InventoryCloseEvent e) {
         if (e.getPlayer() instanceof Player p) {
@@ -189,7 +222,6 @@ public class ShopUI implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-
         if (!(e.getView().getTopInventory().getHolder() instanceof MarketHolder holder)) return;
 
         e.setCancelled(true);
@@ -198,7 +230,7 @@ public class ShopUI implements Listener {
         ItemStack clicked = e.getCurrentItem();
         if (clicked == null || clicked.getType() == Material.AIR) return;
 
-        // auction button click (works in both main and category)
+        // Кнопка аукциона
         int ahSlot = plugin.getConfig().getInt("settings.gui.auctionButton.slot", 53);
         if (e.getSlot() == ahSlot && p.hasPermission("livemarket.auction")) {
             p.closeInventory();
@@ -206,7 +238,7 @@ public class ShopUI implements Listener {
             return;
         }
 
-        // MAIN menu: click category by slot
+        // Главное меню: категории по слоту
         if (holder.getCategory() == null) {
             for (CategoryDef cat : market.getCategories().values()) {
                 if (e.getSlot() == cat.slot()) {
@@ -221,12 +253,13 @@ public class ShopUI implements Listener {
             return;
         }
 
-        // CATEGORY menu
+        // Категория: назад
         if (e.getSlot() == BACK_SLOT && clicked.getType() == Material.ARROW) {
             openMain(p);
             return;
         }
 
+        // Товар
         MarketItem it = market.getItem(clicked.getType());
         if (it == null) return;
 
@@ -237,14 +270,5 @@ public class ShopUI implements Listener {
         } else if (e.isRightClick()) {
             market.sell(p, it, qty);
         }
-
-        // обновить видимый слот
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Inventory top = p.getOpenInventory().getTopInventory();
-            int slot = it.getSlot();
-            if (slot >= 0 && slot < top.getSize()) {
-                top.setItem(slot, buildMarketItem(it));
-            }
-        }, 1L);
     }
 }
