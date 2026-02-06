@@ -12,6 +12,10 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.kyori.adventure.translation.GlobalTranslator;
+
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -148,6 +152,19 @@ public class MarketService {
 
     public String format(double v) {
         return String.format("$%.2f", v);
+    }
+
+    /** Локализованное название предмета для сообщений (берёт язык клиента игрока). */
+    private String localizedMaterialName(Player p, Material mat) {
+        try {
+            var locale = p.locale();
+            Component c = Component.translatable(mat.translationKey());
+            Component rendered = GlobalTranslator.render(c, locale);
+            String plain = PlainTextComponentSerializer.plainText().serialize(rendered);
+            if (plain != null && !plain.isBlank()) return plain;
+        } catch (Throwable ignored) {}
+        // запасной вариант
+        return mat.name();
     }
 
     public boolean isCooldownOk(Player p) {
@@ -333,7 +350,7 @@ public long secondsUntilNextUpdate() {
             }
         }
 
-        p.sendMessage("§aКуплено: §f" + qty + " " + it.getMaterial() + " §7за §f" + format(cost));
+        p.sendMessage("§aКуплено: §f" + qty + " §f" + localizedMaterialName(p, it.getMaterial()) + " §7за §f" + format(cost));
         return true;
     }
 
@@ -368,7 +385,7 @@ public long secondsUntilNextUpdate() {
             }
         }
 
-        p.sendMessage("§aПродано: §f" + rr.removed + " " + it.getMaterial()
+        p.sendMessage("§aПродано: §f" + rr.removed + " §f" + localizedMaterialName(p, it.getMaterial())
                 + " §7за §f" + format(revenue)
                 + " §7(прочность: §f" + String.format("%.0f%%", durabilityMult * 100) + "§7)");
         return true;
