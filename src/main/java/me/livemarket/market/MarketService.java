@@ -155,12 +155,12 @@ public class MarketService {
         return String.format("$%.2f", v);
     }
 
-    /** Локализованное название предмета для сообщений (берёт язык клиента игрока). */
+    /** Локализованное (РУССКОЕ) название предмета для сообщений. */
     private String localizedMaterialName(Player p, Material mat) {
         try {
-            var locale = p.locale();
+            java.util.Locale ru = java.util.Locale.forLanguageTag("ru-RU");
             Component c = Component.translatable(mat.translationKey());
-            Component rendered = GlobalTranslator.render(c, locale);
+            Component rendered = GlobalTranslator.render(c, ru);
             String plain = PlainTextComponentSerializer.plainText().serialize(rendered);
             if (plain != null && !plain.isBlank()) return plain;
         } catch (Throwable ignored) {}
@@ -177,7 +177,6 @@ public class MarketService {
 
     // ===== таймер до следующего обновления =====
 
-    /** Возвращает строку HH:mm:ss до следующего обновления (22:00 МСК по умолчанию). */
     public String getTimeUntilNextUpdateString() {
         long seconds = secondsUntilNextUpdate();
         long h = seconds / 3600;
@@ -240,17 +239,14 @@ public class MarketService {
 
         double ratio = (buy + 1.0) / (sell + 1.0);
         double demandFactor = Math.pow(ratio, kDemand);
-        // Цена покупки НЕ должна расти: игнорируем спрос (ratio>1)
-        if (demandFactor > 1.0) demandFactor = 1.0;
+        if (demandFactor > 1.0) demandFactor = 1.0; // цена покупки не растёт
 
         int stock = it.getStock();
         int target = it.getStockTarget();
         double stockFactor = Math.pow(((target + 1.0) / (stock + 1.0)), sStock);
-        // Цена покупки НЕ должна расти: дефицит не повышает цену
-        if (stockFactor > 1.0) stockFactor = 1.0;
+        if (stockFactor > 1.0) stockFactor = 1.0; // дефицит не повышает цену
 
         double targetPrice = it.getBasePrice() * demandFactor * stockFactor;
-        // Не выше базовой цены
         if (targetPrice > it.getBasePrice()) targetPrice = it.getBasePrice();
         targetPrice = clamp(targetPrice, it.getMinPrice(), it.getMaxPrice());
 
@@ -264,13 +260,10 @@ public class MarketService {
         it.decayEma(0.15);
     }
 
-    /**
-     * Микро-обновление цены сразу после сделки, чтобы игроки видели реакцию рынка моментально.
-     * Использует тот же таргет, но меньший шаг.
-     */
     private void updatePriceWithStep(MarketItem it, double step) {
         double buy = it.getBuyEma();
         double sell = it.getSellEma();
+
         double ratio = (buy + 1.0) / (sell + 1.0);
         double demandFactor = Math.pow(ratio, kDemand);
         if (demandFactor > 1.0) demandFactor = 1.0;
@@ -304,11 +297,10 @@ public class MarketService {
     public double getSellPrice(MarketItem it) {
         double mult = sellMultiplier;
 
-        // Если предмет часто продают — дополнительно режем sell-выручку
         if (sellPressureEnabled) {
             double buy = it.getBuyEma();
             double sell = it.getSellEma();
-            double ratio = (buy + 1.0) / (sell + 1.0); // <1 если sell>buy
+            double ratio = (buy + 1.0) / (sell + 1.0);
             double pressure = Math.pow(ratio, sellPressureK);
             double effective = mult * pressure;
             mult = Math.max(sellPressureMinMultiplier, Math.min(mult, effective));
@@ -324,7 +316,6 @@ public class MarketService {
         if (qty <= 0) return false;
 
         synchronized (it) {
-            // Товар должен заканчиваться: если stock=0 — купить нельзя
             if (it.getStock() < qty) {
                 p.sendMessage("§cНа складе рынка нет товара. Жди, пока кто-то продаст этот предмет.");
                 return false;

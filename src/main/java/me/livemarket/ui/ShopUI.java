@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -129,6 +130,13 @@ public class ShopUI implements Listener {
         ItemMeta meta = is.getItemMeta();
         if (meta != null) {
             meta.setDisplayName("§a" + cat.title());
+            // Убираем отображение характеристик (броня/урон/скорость) у категорий
+            meta.addItemFlags(
+                    ItemFlag.HIDE_ATTRIBUTES,
+                    ItemFlag.HIDE_ENCHANTS,
+                    ItemFlag.HIDE_UNBREAKABLE,
+                    ItemFlag.HIDE_ADDITIONAL_TOOLTIP
+            );
             meta.setLore(List.of(
                     "§7Открыть категорию",
                     "§7До обновления: §f" + market.getTimeUntilNextUpdateString()
@@ -271,5 +279,8 @@ public class ShopUI implements Listener {
         } else if (e.isRightClick()) {
             market.sell(p, it, qty);
         }
+
+        // Сразу обновляем цены/склад в GUI без перезахода
+        refreshCategory(p, holder.getCategory());
     }
 }

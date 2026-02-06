@@ -13,7 +13,6 @@ settings:
         - "§7Открыть аукцион"
         - "§eНажми чтобы выполнить /ah"
 
-  # обновление рынка строго в 22:00 по Москве
   updateTime:
     zoneId: "Europe/Moscow"
     hour: 22
@@ -26,13 +25,11 @@ settings:
     sellMultiplier: 0.85
     clickCooldownMs: 250
 
-    # доп. удешевление SELL если предмет часто продают
     sellPressure:
       enabled: true
       k: 0.18
       minMultiplier: 0.55
 
-    # микро-реакция цены после каждой сделки (чтобы изменения были заметны сразу)
     instantAdjustment:
       enabled: true
       maxStepPerTrade: 0.01
@@ -54,7 +51,7 @@ permissionsDescriptions:
   livemarket.category.misc: "Доступ к категории Прочее"
   livemarket.admin: "Админ-доступ (на будущее)"
 
-categories: # ровно 6
+categories:
   armor:
     title: "Броня"
     icon: "DIAMOND_CHESTPLATE"
