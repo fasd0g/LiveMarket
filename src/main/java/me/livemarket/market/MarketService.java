@@ -12,15 +12,15 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.kyori.adventure.translation.GlobalTranslator;
-
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.kyori.adventure.translation.GlobalTranslator;
 
 public class MarketService {
 
@@ -42,10 +42,11 @@ public class MarketService {
     private long cooldownMs;
 
     private boolean sellPressureEnabled;
-    private boolean instantAdjustEnabled;
-    private double instantMaxStepPerTrade;
     private double sellPressureK;
     private double sellPressureMinMultiplier;
+
+    private boolean instantAdjustEnabled;
+    private double instantMaxStepPerTrade;
 
     private ZoneId zoneId;
     private int hour;
@@ -163,7 +164,6 @@ public class MarketService {
             String plain = PlainTextComponentSerializer.plainText().serialize(rendered);
             if (plain != null && !plain.isBlank()) return plain;
         } catch (Throwable ignored) {}
-        // запасной вариант
         return mat.name();
     }
 
@@ -175,27 +175,26 @@ public class MarketService {
         return true;
     }
 
-    
-// ===== таймер до следующего обновления =====
+    // ===== таймер до следующего обновления =====
 
-/** Возвращает строку HH:mm:ss до следующего обновления (22:00 МСК по умолчанию). */
-public String getTimeUntilNextUpdateString() {
-    long seconds = secondsUntilNextUpdate();
-    long h = seconds / 3600;
-    long m = (seconds % 3600) / 60;
-    long s = seconds % 60;
-    return String.format("%02d:%02d:%02d", h, m, s);
-}
+    /** Возвращает строку HH:mm:ss до следующего обновления (22:00 МСК по умолчанию). */
+    public String getTimeUntilNextUpdateString() {
+        long seconds = secondsUntilNextUpdate();
+        long h = seconds / 3600;
+        long m = (seconds % 3600) / 60;
+        long s = seconds % 60;
+        return String.format("%02d:%02d:%02d", h, m, s);
+    }
 
-public long secondsUntilNextUpdate() {
-    ZonedDateTime now = ZonedDateTime.now(zoneId);
-    ZonedDateTime next = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0);
-    if (!next.isAfter(now)) next = next.plusDays(1);
-    Duration d = Duration.between(now.toInstant(), next.toInstant());
-    return Math.max(0, d.getSeconds());
-}
+    public long secondsUntilNextUpdate() {
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        ZonedDateTime next = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0);
+        if (!next.isAfter(now)) next = next.plusDays(1);
+        Duration d = Duration.between(now.toInstant(), next.toInstant());
+        return Math.max(0, d.getSeconds());
+    }
 
-// ===== ежедневное обновление рынка =====
+    // ===== ежедневное обновление рынка =====
 
     public void scheduleDailyUpdateAtMoscowTime() {
         long delayTicks = ticksUntilNextUpdate();
@@ -241,12 +240,18 @@ public long secondsUntilNextUpdate() {
 
         double ratio = (buy + 1.0) / (sell + 1.0);
         double demandFactor = Math.pow(ratio, kDemand);
+        // Цена покупки НЕ должна расти: игнорируем спрос (ratio>1)
+        if (demandFactor > 1.0) demandFactor = 1.0;
 
         int stock = it.getStock();
         int target = it.getStockTarget();
         double stockFactor = Math.pow(((target + 1.0) / (stock + 1.0)), sStock);
+        // Цена покупки НЕ должна расти: дефицит не повышает цену
+        if (stockFactor > 1.0) stockFactor = 1.0;
 
         double targetPrice = it.getBasePrice() * demandFactor * stockFactor;
+        // Не выше базовой цены
+        if (targetPrice > it.getBasePrice()) targetPrice = it.getBasePrice();
         targetPrice = clamp(targetPrice, it.getMinPrice(), it.getMaxPrice());
 
         double cur = it.getPrice();
@@ -268,12 +273,15 @@ public long secondsUntilNextUpdate() {
         double sell = it.getSellEma();
         double ratio = (buy + 1.0) / (sell + 1.0);
         double demandFactor = Math.pow(ratio, kDemand);
+        if (demandFactor > 1.0) demandFactor = 1.0;
 
         int stock = it.getStock();
         int target = it.getStockTarget();
         double stockFactor = Math.pow(((target + 1.0) / (stock + 1.0)), sStock);
+        if (stockFactor > 1.0) stockFactor = 1.0;
 
         double targetPrice = it.getBasePrice() * demandFactor * stockFactor;
+        if (targetPrice > it.getBasePrice()) targetPrice = it.getBasePrice();
         targetPrice = clamp(targetPrice, it.getMinPrice(), it.getMaxPrice());
 
         double cur = it.getPrice();
@@ -296,14 +304,13 @@ public long secondsUntilNextUpdate() {
     public double getSellPrice(MarketItem it) {
         double mult = sellMultiplier;
 
+        // Если предмет часто продают — дополнительно режем sell-выручку
         if (sellPressureEnabled) {
             double buy = it.getBuyEma();
             double sell = it.getSellEma();
             double ratio = (buy + 1.0) / (sell + 1.0); // <1 если sell>buy
             double pressure = Math.pow(ratio, sellPressureK);
             double effective = mult * pressure;
-
-            // ограничим так, чтобы не улетало слишком низко
             mult = Math.max(sellPressureMinMultiplier, Math.min(mult, effective));
         }
 
@@ -317,6 +324,7 @@ public long secondsUntilNextUpdate() {
         if (qty <= 0) return false;
 
         synchronized (it) {
+            // Товар должен заканчиваться: если stock=0 — купить нельзя
             if (it.getStock() < qty) {
                 p.sendMessage("§cНа складе рынка нет товара. Жди, пока кто-то продаст этот предмет.");
                 return false;
@@ -345,9 +353,7 @@ public long secondsUntilNextUpdate() {
         synchronized (it) {
             it.setStock(it.getStock() - qty);
             it.addBuyVolume(qty);
-            if (instantAdjustEnabled) {
-                updatePriceWithStep(it, instantMaxStepPerTrade);
-            }
+            if (instantAdjustEnabled) updatePriceWithStep(it, instantMaxStepPerTrade);
         }
 
         p.sendMessage("§aКуплено: §f" + qty + " §f" + localizedMaterialName(p, it.getMaterial()) + " §7за §f" + format(cost));
@@ -380,9 +386,7 @@ public long secondsUntilNextUpdate() {
         synchronized (it) {
             it.setStock(it.getStock() + rr.removed);
             it.addSellVolume(rr.removed);
-            if (instantAdjustEnabled) {
-                updatePriceWithStep(it, instantMaxStepPerTrade);
-            }
+            if (instantAdjustEnabled) updatePriceWithStep(it, instantMaxStepPerTrade);
         }
 
         p.sendMessage("§aПродано: §f" + rr.removed + " §f" + localizedMaterialName(p, it.getMaterial())

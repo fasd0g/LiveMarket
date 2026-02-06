@@ -26,15 +26,16 @@ settings:
     sellMultiplier: 0.85
     clickCooldownMs: 250
 
-
-    instantAdjustment:
-      enabled: true
-      maxStepPerTrade: 0.01
     # доп. удешевление SELL если предмет часто продают
     sellPressure:
       enabled: true
       k: 0.18
       minMultiplier: 0.55
+
+    # микро-реакция цены после каждой сделки (чтобы изменения были заметны сразу)
+    instantAdjustment:
+      enabled: true
+      maxStepPerTrade: 0.01
 
   messages:
     marketUpdateBroadcast: "§a[Рынок] §fРынок обновлён! Цены пересчитаны."

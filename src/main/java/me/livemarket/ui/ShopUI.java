@@ -26,6 +26,7 @@ public class ShopUI implements Listener {
 
     /** Игрок -> открытая категория (null = главное меню). */
     private final Map<UUID, String> viewerCategories = new HashMap<>();
+    @SuppressWarnings("unused")
     private int refreshTaskId = -1;
 
     public ShopUI(JavaPlugin plugin, MarketService market) {
