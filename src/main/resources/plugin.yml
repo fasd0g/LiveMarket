@@ -1,0 +1,53 @@
+name: LiveMarket
+version: 1.3.0
+main: me.livemarket.LiveMarketPlugin
+api-version: "1.21"
+depend: [Vault]
+
+commands:
+  shop:
+    description: Open market GUI
+    usage: /shop
+    permission: livemarket.shop.open
+  price:
+    description: Show current item price
+    usage: /price <material>
+    permission: livemarket.price
+
+  lmgen:
+    description: Generate items config file (generated-items.yml)
+    usage: /lmgen [countPerCategory]
+    permission: livemarket.admin
+
+  shopedit:
+    description: Open market in edit mode
+    usage: /shopedit
+    permission: livemarket.shop.edit
+
+permissions:
+  livemarket.shop.open:
+    default: true
+  livemarket.price:
+    default: true
+  livemarket.buy:
+    default: true
+  livemarket.sell:
+    default: true
+  livemarket.auction:
+    default: true
+
+  livemarket.category.armor:
+    default: true
+  livemarket.category.food:
+    default: true
+  livemarket.category.tools:
+    default: true
+  livemarket.category.ores:
+    default: true
+  livemarket.category.blocks:
+    default: true
+  livemarket.category.misc:
+    default: true
+
+  livemarket.admin:
+    default: op
