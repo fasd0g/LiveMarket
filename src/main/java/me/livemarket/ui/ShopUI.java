@@ -434,6 +434,12 @@ public class ShopUI implements Listener {
         MarketItem it = market.getItem(clicked.getType());
         if (it == null) return;
 
+// Защита: нельзя покупать/продавать предмет, если открыта не его категория
+if (category != null && !it.getCategory().equalsIgnoreCase(category)) {
+    p.sendMessage("§cЭтот предмет находится в другой категории.");
+    return;
+}
+
         int qty = e.isShiftClick() ? 16 : 1;
         if (e.isLeftClick()) market.buy(p, it, qty);
         else if (e.isRightClick()) market.sell(p, it, qty);
