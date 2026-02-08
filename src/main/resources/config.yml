@@ -2,12 +2,6 @@ settings:
   economy:
     sellMultiplier: 0.65
     dailySellLimitGlobal: 384
-    # Максимальное изменение цены за сутки (в % от текущей цены)
-    dailyMaxChangePercent: 15.0
-    # Насколько сильно цена тянется к базовой цене при ежедневном обновлении (0..1)
-    dailyNormalizeStrength: 0.15
-    # Логировать крупные сделки в консоль (0 = выключено)
-    largeTradeThresholdMoney: 1000.0
 
   dailyDeal:
     enabled: true
@@ -30,10 +24,6 @@ settings:
       lore:
         - "§7Открыть аукцион"
         - "§eНажми чтобы выполнить /ah"
-
-  ui:
-    # Анти-спам по кликам покупки/продажи (мс)
-    clickCooldownMs: 250
 
   updateTime:
     zoneId: "Europe/Moscow"

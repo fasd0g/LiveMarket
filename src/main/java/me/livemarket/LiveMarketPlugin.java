@@ -20,12 +20,6 @@ public final class LiveMarketPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        // RU name overrides
-        NameOverrides nameOverrides = new NameOverrides(this);
-        nameOverrides.load();
-        NameUtil.setOverrideProvider(nameOverrides::get);
-
-
         if (!hookEconomy()) {
             getLogger().severe("Vault economy not found. Install EssentialsX (or other economy) + Vault.");
             getServer().getPluginManager().disablePlugin(this);

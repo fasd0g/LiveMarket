@@ -8,25 +8,11 @@ import org.bukkit.Material;
 import java.util.Locale;
 
 public final class NameUtil {
-    private static volatile java.util.function.Function<Material, String> overrideProvider;
-
-    public static void setOverrideProvider(java.util.function.Function<Material, String> provider) {
-        overrideProvider = provider;
-    }
-
     private static final Locale RU = Locale.forLanguageTag("ru-ru");
 
     private NameUtil() {}
 
     public static String ru(Material mat) {
-        try {
-            var p = overrideProvider;
-            if (p != null) {
-                String o = p.apply(mat);
-                if (o != null && !o.isBlank()) return o;
-            }
-        } catch (Throwable ignored) {}
-
         try {
             String key = mat.translationKey(); // item.minecraft.* or block.minecraft.*
             Component rendered = GlobalTranslator.render(Component.translatable(key), RU);
