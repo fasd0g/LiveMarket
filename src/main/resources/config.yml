@@ -163,11 +163,9 @@ help:
   commands:
     - "/shop — открыть рынок"
     - "/price <предмет> — показать цену предмета"
-    - "/lmgen [N|all] — сгенерировать файл generated-items.yml (N предметов на категорию или all)"
     - "/shopedit — открыть рынок в режиме редактирования (добавление/удаление товаров)"
   permissions:
     - "livemarket.shop — доступ к /shop"
     - "livemarket.category.<key> — доступ к категории (пример: livemarket.category.food)"
     - "livemarket.price — доступ к /price"
-    - "livemarket.admin — админ-доступ (используется для /lmgen)"
     - "livemarket.shop.edit — доступ к /shopedit (редактор ассортимента)"

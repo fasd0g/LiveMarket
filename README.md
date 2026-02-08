@@ -17,7 +17,6 @@
 - Любая экономика (EssentialsX, CMI, ...)
 
 ## Генератор предметов
-- Команда: `/lmgen [countPerCategory]` (требует `livemarket.admin`)
 - Создаёт файл `plugins/LiveMarket/generated-items.yml`
 
 ## Редактор ассортимента
@@ -30,6 +29,5 @@
 ## Команды и права
 - `/shop` — открыть рынок (perm `livemarket.shop`)
 - `/price <material>` — цена предмета (perm `livemarket.price`)
-- `/lmgen [N|all]` — генератор ассортимента (perm `livemarket.admin`)
 - `/shopedit` — редактор ассортимента (perm `livemarket.shop.edit`)
 - Категории: `livemarket.category.<key>` (например `livemarket.category.food`)

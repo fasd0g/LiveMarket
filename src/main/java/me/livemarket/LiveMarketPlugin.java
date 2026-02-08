@@ -55,7 +55,6 @@ public final class LiveMarketPlugin extends JavaPlugin {
         });
 
         getCommand("price").setExecutor(new PriceCommand(market));
-        getCommand("lmgen").setExecutor(new GenerateCommand(this));
 
         Bukkit.getPluginManager().registerEvents(shopUI, this);
 
