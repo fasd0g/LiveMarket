@@ -510,6 +510,16 @@ private static class PriceProfile {
     int stock, stockTarget;
 }
 
+
+private static double armorPieceMultiplier(String name) {
+    // пропорции по количеству материала в крафте: шлем 5, нагрудник 8, поножи 7, ботинки 4
+    if (name.endsWith("_CHESTPLATE")) return 8.0 / 8.0; // 1.0
+    if (name.endsWith("_LEGGINGS")) return 7.0 / 8.0;
+    if (name.endsWith("_HELMET")) return 5.0 / 8.0;
+    if (name.endsWith("_BOOTS")) return 4.0 / 8.0;
+    return 1.0;
+}
+
 private PriceProfile defaultProfile(String cat, Material mat) {
     String n = mat.name();
     PriceProfile p = new PriceProfile();
