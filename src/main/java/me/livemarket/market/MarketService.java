@@ -27,6 +27,9 @@ public class MarketService {
     private final java.util.Map<org.bukkit.Material, Double> dailyDealBonus = new java.util.HashMap<>();
     private double sellMultiplier;
     private int dailySellLimitGlobal;
+    private double dailyMaxChangePercent;
+    private double dailyNormalizeStrength;
+    private double largeTradeThresholdMoney;
 
 
     private final JavaPlugin plugin;
@@ -58,6 +61,9 @@ public class MarketService {
 
     public MarketService(JavaPlugin plugin, Economy economy, MarketDatabase db) {
         sellMultiplier = plugin.getConfig().getDouble("settings.economy.sellMultiplier", 0.65);
+        dailyMaxChangePercent = plugin.getConfig().getDouble("settings.economy.dailyMaxChangePercent", 15.0);
+        dailyNormalizeStrength = plugin.getConfig().getDouble("settings.economy.dailyNormalizeStrength", 0.15);
+        largeTradeThresholdMoney = plugin.getConfig().getDouble("settings.economy.largeTradeThresholdMoney", 0.0);
         dailySellLimitGlobal = plugin.getConfig().getInt("settings.economy.dailySellLimitGlobal", 384);
 
         this.plugin = plugin;
@@ -72,6 +78,9 @@ public class MarketService {
         kDemand = cfg.getDouble("settings.update.kDemand", 0.45);
         sStock = cfg.getDouble("settings.update.sStock", 0.25);
         sellMultiplier = cfg.getDouble("settings.economy.sellMultiplier", cfg.getDouble("settings.update.sellMultiplier", 0.65));cooldownMs = cfg.getLong("settings.update.clickCooldownMs", 250);
+        dailyMaxChangePercent = cfg.getDouble("settings.economy.dailyMaxChangePercent", 15.0);
+        dailyNormalizeStrength = cfg.getDouble("settings.economy.dailyNormalizeStrength", 0.15);
+        largeTradeThresholdMoney = cfg.getDouble("settings.economy.largeTradeThresholdMoney", 0.0);
 
         sellPressureEnabled = cfg.getBoolean("settings.update.sellPressure.enabled", true);
         sellPressureK = cfg.getDouble("settings.update.sellPressure.k", 0.18);
@@ -156,6 +165,24 @@ public class MarketService {
         }
         return out;
     }
+
+    
+private String NameUtil.ru(org.bukkit.Material mat) {
+    String s = mat.name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
+    StringBuilder out = new StringBuilder();
+    boolean cap = true;
+    for (char c : s.toCharArray()) {
+        if (cap && Character.isLetter(c)) {
+            out.append(Character.toUpperCase(c));
+            cap = false;
+        } else {
+            out.append(c);
+        }
+        if (c == ' ') cap = true;
+    }
+    return out.toString();
+}
+
 public String format(double v) {
         return String.format("$%.2f", v);
     }
@@ -226,6 +253,29 @@ public String format(double v) {
     }
 
     
+private void applyDailyStabilizers(MarketItem it, double oldPrice) {
+    double p = it.getPrice();
+
+    // Ограничение изменения цены за сутки
+    double pct = Math.max(0.0, dailyMaxChangePercent);
+    if (pct > 0.0) {
+        double maxDelta = oldPrice * (pct / 100.0);
+        double min = oldPrice - maxDelta;
+        double max = oldPrice + maxDelta;
+        p = Math.max(min, Math.min(max, p));
+    }
+
+    // Нормализация к базовой цене
+    double k = dailyNormalizeStrength;
+    if (k > 0.0 && k < 1.0) {
+        p = p + (it.getBasePrice() - p) * k;
+    }
+
+    // Финальный clamp по min/max
+    p = Math.max(it.getMinPrice(), Math.min(it.getMaxPrice(), p));
+    it.setPrice(p);
+}
+
 /** Принудительно выполнить обновление рынка (для админ-команд/тестов). */
 public void forceDailyUpdate() {
     runDailyUpdate();
@@ -233,7 +283,9 @@ public void forceDailyUpdate() {
 
 private void runDailyUpdate() {
         for (MarketItem it : items.values()) {
+            double oldPrice = it.getPrice();
             updatePrice(it);
+            applyDailyStabilizers(it, oldPrice);
             db.upsertItem(it.getMaterial().name(), it.getPrice(), it.getStock());
             it.snapshotTrend();
             it.resetTradeCounters();
@@ -420,6 +472,9 @@ private double clamp(double v, double mn, double mx) {
         }
 
         var res = economy.withdrawPlayer(p, cost);
+            if (largeTradeThresholdMoney > 0.0 && cost >= largeTradeThresholdMoney) {
+                plugin.getLogger().info("[LargeTrade] BUY " + p.getName() + " x" + qty + " " + it.getMaterial().name() + " for " + String.format(java.util.Locale.US, "%.2f", cost));
+            }
         if (!res.transactionSuccess()) {
             p.sendMessage("§cОшибка оплаты: " + res.errorMessage);
             return false;
@@ -428,6 +483,9 @@ private double clamp(double v, double mn, double mx) {
         Map<Integer, ItemStack> left = p.getInventory().addItem(new ItemStack(it.getMaterial(), qty));
         if (!left.isEmpty()) {
             economy.depositPlayer(p, cost);
+            if (largeTradeThresholdMoney > 0.0 && payout >= largeTradeThresholdMoney) {
+                plugin.getLogger().info("[LargeTrade] SELL " + p.getName() + " x" + qty + " " + it.getMaterial().name() + " for " + String.format(java.util.Locale.US, "%.2f", payout));
+            }
             p.sendMessage("§cИнвентарь полон. Покупка отменена.");
             return false;
         }
@@ -478,6 +536,9 @@ private double clamp(double v, double mn, double mx) {
         double revenue = baseSellUnit * rr.removed * durabilityMult;
 
         economy.depositPlayer(p, revenue);
+            if (largeTradeThresholdMoney > 0.0 && payout >= largeTradeThresholdMoney) {
+                plugin.getLogger().info("[LargeTrade] SELL " + p.getName() + " x" + qty + " " + it.getMaterial().name() + " for " + String.format(java.util.Locale.US, "%.2f", payout));
+            }
 
         synchronized (it) {
             it.setStock(it.getStock() + rr.removed);

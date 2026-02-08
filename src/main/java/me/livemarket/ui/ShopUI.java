@@ -21,8 +21,13 @@ import java.util.*;
 
 public class ShopUI implements Listener {
 
+    private final java.util.Map<java.util.UUID, Long> clickCooldown = new java.util.HashMap<>();
+
+
     private final JavaPlugin plugin;
     private final MarketService market;
+    private final long clickCooldownMs;
+
 
     private static final int BACK_SLOT = 49;
 
@@ -32,6 +37,8 @@ public class ShopUI implements Listener {
     public ShopUI(JavaPlugin plugin, MarketService market) {
         this.plugin = plugin;
         this.market = market;
+        this.clickCooldownMs = plugin.getConfig().getLong("settings.ui.clickCooldownMs", 250L);
+
         startRefreshTask();
     }
 
@@ -179,8 +186,7 @@ viewerCategories.put(p.getUniqueId(), null);
         ItemStack is = new ItemStack(cat.icon());
         ItemMeta meta = is.getItemMeta();
         if (meta != null) {
-            // title уже хранится в конфиге как строка (обычно по-русски), поэтому не прогоняем через NameUtil
-            meta.setDisplayName("§a" + cat.title());
+            meta.setDisplayName(\"§a\" + NameUtil.ru(cat.title()));
             // Убираем отображение характеристик (броня/урон/скорость) у категорий
             meta.addItemFlags(
                     ItemFlag.HIDE_ATTRIBUTES,
@@ -317,6 +323,15 @@ viewerCategories.put(p.getUniqueId(), null);
         // ===== РЕДАКТОР =====
         if (isEdit) {
             e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
             if (!p.hasPermission("livemarket.shop.edit")) {
                 p.sendMessage("§cНет прав на редактирование рынка.");
                 p.updateInventory();
@@ -330,6 +345,15 @@ viewerCategories.put(p.getUniqueId(), null);
                     if (e.getSlot() == cat.slot()) {
                         openCategoryEdit(p, cat);
                         e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
                         return;
                     }
                 }
@@ -340,6 +364,15 @@ viewerCategories.put(p.getUniqueId(), null);
             if (clicked != null && e.getSlot() == BACK_SLOT && clicked.getType() == Material.ARROW) {
                 openMainEdit(p);
                 e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
                 return;
             }
 
@@ -351,6 +384,15 @@ viewerCategories.put(p.getUniqueId(), null);
                     top.setItem(e.getSlot(), null);
                     p.sendMessage("§aУдалено из рынка: §f" + clicked.getType().name());
                     e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
                 }
                 return;
             }
@@ -361,11 +403,29 @@ viewerCategories.put(p.getUniqueId(), null);
         // Разрешаем добавление только если кликнули по верхнему инвентарю
         if (e.getClickedInventory() == null || e.getClickedInventory() != top) {
             e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
             p.updateInventory();
             return;
         }
         if (e.getRawSlot() >= top.getSize()) {
             e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
             p.updateInventory();
             return;
         }
@@ -374,6 +434,15 @@ viewerCategories.put(p.getUniqueId(), null);
         if (market.getItem(mat) != null) {
             p.sendMessage("§cЭтот предмет уже есть в рынке.");
             e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
             p.updateInventory(); // чтобы предмет на курсоре не "залипал"
             return;
         }
@@ -381,6 +450,15 @@ viewerCategories.put(p.getUniqueId(), null);
         if (slot == BACK_SLOT || slot == ahSlot) {
             p.sendMessage("§cНельзя добавлять в этот слот.");
             e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
             p.updateInventory();
             return;
         }
@@ -395,6 +473,15 @@ viewerCategories.put(p.getUniqueId(), null);
             p.sendMessage("§cНе удалось добавить.");
         }
         e.setCancelled(true);
+
+        // Анти-спам по кликам
+        long now = System.currentTimeMillis();
+        Long last = clickCooldown.get(p.getUniqueId());
+        if (last != null && (now - last) < clickCooldownMs) {
+            return;
+        }
+        clickCooldown.put(p.getUniqueId(), now);
+
         p.updateInventory();
         return;
     }
@@ -444,6 +531,7 @@ if (category != null && !it.getCategory().equalsIgnoreCase(category)) {
         // сразу обновляем GUI
         refreshCategory(p, category);
     }
+}
 private void tryAddItemFromInventory(Player p, ItemStack stack) {
     if (stack == null || stack.getType() == org.bukkit.Material.AIR) return;
     String cat = viewerCategories.get(p.getUniqueId());
