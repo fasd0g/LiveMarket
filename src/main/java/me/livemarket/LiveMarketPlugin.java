@@ -15,8 +15,6 @@ public final class LiveMarketPlugin extends JavaPlugin {
     private MarketDatabase database;
     private MarketService market;
     private ShopUI shopUI;
-        org.bukkit.command.PluginCommand upd = getCommand("lmupdate");
-        if (upd != null) upd.setExecutor(new UpdateCommand(market));
 
     @Override
     public void onEnable() {
@@ -35,6 +33,11 @@ public final class LiveMarketPlugin extends JavaPlugin {
         this.market.loadFromConfigAndDb();
 
         this.shopUI = new ShopUI(this, market);
+
+        // Admin: force market update (for testing)
+        var upd = getCommand("lmupdate");
+        if (upd != null) upd.setExecutor(new UpdateCommand(market));
+
 
         getCommand("shop").setExecutor( (sender, command, label, args) -> {
             if (!(sender instanceof org.bukkit.entity.Player p)) {
