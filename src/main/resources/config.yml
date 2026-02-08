@@ -1,4 +1,16 @@
 settings:
+  economy:
+    sellMultiplier: 0.65
+    dailySellLimitGlobal: 384
+
+  dailyDeal:
+    enabled: true
+    count: 3
+    bonusMin: 0.20
+    bonusMax: 0.40
+    announce: true
+    prefix: "§6[Рынок]"
+
   gui:
     mainTitle: "§aЖивой рынок"
     categoryTitlePrefix: "§aРынок: §f"

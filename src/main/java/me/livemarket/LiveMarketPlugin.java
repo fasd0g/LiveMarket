@@ -3,6 +3,7 @@ package me.livemarket;
 import me.livemarket.db.MarketDatabase;
 import me.livemarket.market.MarketService;
 import me.livemarket.ui.ShopUI;
+import me.livemarket.UpdateCommand;
 import me.livemarket.GenerateCommand;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -58,7 +59,7 @@ public final class LiveMarketPlugin extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(shopUI, this);
 
-        market.scheduleDailyUpdateAtMoscowTime();
+        market.scheduleDailyUpdate();
 
         getLogger().info("LiveMarket enabled.");
     }

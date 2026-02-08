@@ -1,10 +1,13 @@
 name: LiveMarket
-version: 1.4.0
+version: 1.4.2
 main: me.livemarket.LiveMarketPlugin
 api-version: 1.21
 depend: [Vault]
 
 commands:
+  lmupdate:
+    description: Force market update
+    permission: livemarket.admin
   shop:
     description: Open market GUI
     usage: /shop

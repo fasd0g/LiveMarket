@@ -23,6 +23,10 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.translation.GlobalTranslator;
 
 public class MarketService {
+    private final java.util.Map<org.bukkit.Material, Double> dailyDealBonus = new java.util.HashMap<>();
+    private double sellMultiplier;
+    private int dailySellLimitGlobal;
+
 
     private final JavaPlugin plugin;
     private final Economy economy;
@@ -53,6 +57,9 @@ public class MarketService {
     private int minute;
 
     public MarketService(JavaPlugin plugin, Economy economy, MarketDatabase db) {
+        sellMultiplier = plugin.getConfig().getDouble("settings.economy.sellMultiplier", 0.65);
+        dailySellLimitGlobal = plugin.getConfig().getInt("settings.economy.dailySellLimitGlobal", 384);
+
         this.plugin = plugin;
         this.economy = economy;
         this.db = db;
@@ -64,8 +71,7 @@ public class MarketService {
         maxStep = cfg.getDouble("settings.update.maxStepPerUpdate", 0.08);
         kDemand = cfg.getDouble("settings.update.kDemand", 0.45);
         sStock = cfg.getDouble("settings.update.sStock", 0.25);
-        sellMultiplier = cfg.getDouble("settings.update.sellMultiplier", 0.85);
-        cooldownMs = cfg.getLong("settings.update.clickCooldownMs", 250);
+        sellMultiplier = cfg.getDouble("settings.economy.sellMultiplier", cfg.getDouble("settings.update.sellMultiplier", 0.65));cooldownMs = cfg.getLong("settings.update.clickCooldownMs", 250);
 
         sellPressureEnabled = cfg.getBoolean("settings.update.sellPressure.enabled", true);
         sellPressureK = cfg.getDouble("settings.update.sellPressure.k", 0.18);
@@ -195,7 +201,7 @@ public class MarketService {
 
     // ===== ежедневное обновление рынка =====
 
-    public void scheduleDailyUpdateAtMoscowTime() {
+    public void scheduleDailyUpdate() {
         long delayTicks = ticksUntilNextUpdate();
         long dayTicks = 24L * 60L * 60L * 20L;
 
@@ -265,7 +271,68 @@ public class MarketService {
         it.decayEma(0.15);
     }
 
-    private void updatePriceWithStep(MarketItem it, double step) {
+    
+public double getEffectiveBuyPrice(MarketItem it) {
+    double p = it.getPrice();
+    double bonus = dailyDealBonus.getOrDefault(it.getMaterial(), 0.0);
+    if (bonus > 0) p = p * (1.0 + bonus);
+    // цена покупки не превышает max
+    p = clamp(p, it.getMinPrice(), it.getMaxPrice());
+    return p;
+}
+
+public double getDailyDealBonus(MarketItem it) {
+    return dailyDealBonus.getOrDefault(it.getMaterial(), 0.0);
+}
+
+private void generateDailyDeals() {
+    dailyDealBonus.clear();
+    if (!plugin.getConfig().getBoolean("settings.dailyDeal.enabled", true)) {
+        db.clearDailyDeals();
+        return;
+    }
+    int count = plugin.getConfig().getInt("settings.dailyDeal.count", 3);
+    double bMin = plugin.getConfig().getDouble("settings.dailyDeal.bonusMin", 0.20);
+    double bMax = plugin.getConfig().getDouble("settings.dailyDeal.bonusMax", 0.40);
+    if (count <= 0) { db.clearDailyDeals(); return; }
+    if (bMax < bMin) { double t=bMax; bMax=bMin; bMin=t; }
+
+    java.util.List<org.bukkit.Material> mats = new java.util.ArrayList<>(items.keySet());
+    java.util.Collections.shuffle(mats);
+    int picked = 0;
+    java.util.Random rnd = new java.util.Random();
+    for (org.bukkit.Material m : mats) {
+        if (picked >= count) break;
+        MarketItem it = items.get(m);
+        if (it == null) continue;
+        // не берём "пустые" категории-заглушки
+        double bonus = bMin + (bMax - bMin) * rnd.nextDouble();
+        bonus = Math.round(bonus * 100.0) / 100.0;
+        dailyDealBonus.put(m, bonus);
+        picked++;
+    }
+    java.util.Map<String, Double> save = new java.util.HashMap<>();
+    for (var en : dailyDealBonus.entrySet()) save.put(en.getKey().name(), en.getValue());
+    db.saveDailyDeals(save);
+}
+
+private void announceDailyDeals() {
+    if (!plugin.getConfig().getBoolean("settings.dailyDeal.announce", true)) return;
+    if (dailyDealBonus.isEmpty()) return;
+    String prefix = plugin.getConfig().getString("settings.dailyDeal.prefix", "§6[Рынок]");
+    java.util.List<String> lines = new java.util.ArrayList<>();
+    lines.add(prefix + " §eТовары дня:");
+    for (var en : dailyDealBonus.entrySet()) {
+        MarketItem it = items.get(en.getKey());
+        if (it == null) continue;
+        String nameRu = plugin.getTranslator().nameRu(en.getKey());
+        int pct = (int) Math.round(en.getValue() * 100.0);
+        lines.add("§e- " + nameRu + " §7(+" + pct + "% к покупке)");
+    }
+    for (String l : lines) org.bukkit.Bukkit.broadcastMessage(l);
+}
+
+private void updatePriceWithStep(MarketItem it, double step) {
         double buy = it.getBuyEma();
         double sell = it.getSellEma();
 
@@ -310,7 +377,7 @@ private double clamp(double v, double mn, double mx) {
     // ===== цены =====
 
     public double getBuyPrice(MarketItem it) {
-        return it.getPrice();
+        return getEffectiveBuyPrice(it);
     }
 
     public double getSellPrice(MarketItem it) {

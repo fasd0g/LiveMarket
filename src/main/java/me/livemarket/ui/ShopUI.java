@@ -206,6 +206,8 @@ viewerCategories.put(p.getUniqueId(), null);
 
             List<String> lore = new ArrayList<>();
             lore.add("§7Buy: §f" + market.format(buy));
+            double dd = market.getDailyDealBonus(it);
+            if (dd > 0) lore.add("§6Товар дня: §e+" + (int)Math.round(dd * 100.0) + "% к покупке");
             lore.add("§7Sell: §f" + market.format(sell) + " §8(учтёт прочность)");
             lore.add("§7Trend: " + it.getTrendArrow() + " " + it.getTrendPercentString());
             lore.add("§7Stock: §f" + it.getStock() + " §7/ §f" + it.getStockTarget());
