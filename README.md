@@ -26,3 +26,10 @@
 
 ## Лимит склада
 - Продажа запрещена, если stock достиг stockTarget (например 320/320)
+
+## Команды и права
+- `/shop` — открыть рынок (perm `livemarket.shop`)
+- `/price <material>` — цена предмета (perm `livemarket.price`)
+- `/lmgen [N|all]` — генератор ассортимента (perm `livemarket.admin`)
+- `/shopedit` — редактор ассортимента (perm `livemarket.shop.edit`)
+- Категории: `livemarket.category.<key>` (например `livemarket.category.food`)
