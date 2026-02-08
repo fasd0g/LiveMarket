@@ -3,6 +3,7 @@ package me.livemarket;
 import me.livemarket.db.MarketDatabase;
 import me.livemarket.market.MarketService;
 import me.livemarket.ui.ShopUI;
+import me.livemarket.UpdateCommand;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -14,6 +15,8 @@ public final class LiveMarketPlugin extends JavaPlugin {
     private MarketDatabase database;
     private MarketService market;
     private ShopUI shopUI;
+        org.bukkit.command.PluginCommand upd = getCommand("lmupdate");
+        if (upd != null) upd.setExecutor(new UpdateCommand(market));
 
     @Override
     public void onEnable() {

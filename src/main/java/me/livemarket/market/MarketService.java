@@ -5,6 +5,7 @@ import me.livemarket.ui.CategoryDef;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import me.livemarket.util.NameUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -157,7 +158,7 @@ public class MarketService {
     }
 
     
-private String formatMaterialName(org.bukkit.Material mat) {
+private String NameUtil.ru(org.bukkit.Material mat) {
     String s = mat.name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
     StringBuilder out = new StringBuilder();
     boolean cap = true;
@@ -347,7 +348,7 @@ private void announceDailyDeals() {
     for (var en : dailyDealBonus.entrySet()) {
         MarketItem it = items.get(en.getKey());
         if (it == null) continue;
-        String nameRu = formatMaterialName(en.getKey());
+        String nameRu = NameUtil.ru(en.getKey());
         int pct = (int) Math.round(en.getValue() * 100.0);
         lines.add("§e- " + nameRu + " §7(+" + pct + "% к покупке)");
     }

@@ -13,6 +13,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import me.livemarket.util.NameUtil;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -178,7 +179,7 @@ viewerCategories.put(p.getUniqueId(), null);
         ItemStack is = new ItemStack(cat.icon());
         ItemMeta meta = is.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("§a" + cat.title());
+            meta.setDisplayName(\"§a\" + NameUtil.ru(cat.title()));
             // Убираем отображение характеристик (броня/урон/скорость) у категорий
             meta.addItemFlags(
                     ItemFlag.HIDE_ATTRIBUTES,
@@ -442,4 +443,18 @@ if (category != null && !it.getCategory().equalsIgnoreCase(category)) {
         // сразу обновляем GUI
         refreshCategory(p, category);
     }
+}
+private void tryAddItemFromInventory(Player p, ItemStack stack) {
+    if (stack == null || stack.getType() == org.bukkit.Material.AIR) return;
+    String cat = viewerCategories.get(p.getUniqueId());
+    if (cat == null) return;
+    // добавляем тип предмета в текущую категорию
+    boolean ok = market.addItemToCategory(cat, stack.getType());
+    if (ok) {
+        p.sendMessage("§aДобавлено в рынок: §f" + NameUtil.ru(stack.getType()) + " §7(категория: " + cat + ")");
+        refreshCategory(p, cat);
+    } else {
+        p.sendMessage("§eЭтот предмет уже есть в категории.");
+    }
+}
 }
