@@ -491,8 +491,7 @@ viewerCategories.put(p.getUniqueId(), null);
                     return;
                 }
 
-                int slot = e.getRawSlot();
-                int ahSlot = plugin.getConfig().getInt("settings.gui.auctionButton.slot", 53);
+				int slot = e.getRawSlot();
                 if (slot == BACK_SLOT || slot == ahSlot) {
                     p.sendMessage("§cНельзя добавлять в этот слот.");
                     p.updateInventory();
