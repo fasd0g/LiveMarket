@@ -258,6 +258,8 @@ public class MarketService {
 
         // Если с прошлого обновления никто не покупал этот товар — цена НЕ должна расти
         if (next > cur && it.getBuysSinceUpdate() <= 0) next = cur;
+        // hard clamp to max/min
+        next = clamp(next, it.getMinPrice(), it.getMaxPrice());
         it.setPrice(next);
 
         it.decayEma(0.15);
@@ -286,6 +288,8 @@ public class MarketService {
         double next = clamp(cur + delta, it.getMinPrice(), it.getMaxPrice());
         // Если с прошлого обновления никто не покупал этот товар — цена НЕ должна расти
         if (next > cur && it.getBuysSinceUpdate() <= 0) next = cur;
+        // hard clamp to max/min
+        next = clamp(next, it.getMinPrice(), it.getMaxPrice());
         it.setPrice(next);
     }
 

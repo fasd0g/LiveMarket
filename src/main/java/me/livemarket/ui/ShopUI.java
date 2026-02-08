@@ -73,10 +73,8 @@ public class ShopUI implements Listener {
             if (cat.slot() < 0 || cat.slot() >= inv.getSize()) continue;
             inv.setItem(cat.slot(), buildCategoryItem(cat));
         }
-
-        addAuctionButton(inv, p);
-
-        viewerCategories.put(p.getUniqueId(), null);
+                addAuctionButton(inv, p);
+viewerCategories.put(p.getUniqueId(), null);
         p.openInventory(inv);
     }
 
@@ -94,8 +92,6 @@ public class ShopUI implements Listener {
         }
 
         inv.setItem(BACK_SLOT, backButton());
-        addAuctionButton(inv, p);
-
         viewerCategories.put(p.getUniqueId(), cat.key());
         p.openInventory(inv);
     }
@@ -108,9 +104,9 @@ public class ShopUI implements Listener {
             if (cat.slot() < 0 || cat.slot() >= inv.getSize()) continue;
             inv.setItem(cat.slot(), buildCategoryItem(cat));
         }
-
+    
         addAuctionButton(inv, p);
-    }
+}
 
     private void refreshCategory(Player p, String categoryKey) {
         Inventory inv = p.getOpenInventory().getTopInventory();
@@ -122,7 +118,6 @@ public class ShopUI implements Listener {
         }
 
         inv.setItem(BACK_SLOT, backButton());
-        addAuctionButton(inv, p);
     }
 
     // ===== режим редактора =====
@@ -137,9 +132,8 @@ public class ShopUI implements Listener {
             if (cat.slot() < 0 || cat.slot() >= inv.getSize()) continue;
             inv.setItem(cat.slot(), buildCategoryItem(cat));
         }
-        addAuctionButton(inv, p);
-
-        viewerCategories.put(p.getUniqueId(), null);
+                addAuctionButton(inv, p);
+viewerCategories.put(p.getUniqueId(), null);
         p.openInventory(inv);
     }
 
@@ -156,8 +150,6 @@ public class ShopUI implements Listener {
         }
 
         inv.setItem(BACK_SLOT, backButton());
-        addAuctionButton(inv, p);
-
         viewerCategories.put(p.getUniqueId(), cat.key());
         p.openInventory(inv);
     }
@@ -168,7 +160,6 @@ public class ShopUI implements Listener {
             if (cat.slot() < 0 || cat.slot() >= inv.getSize()) continue;
             inv.setItem(cat.slot(), buildCategoryItem(cat));
         }
-        addAuctionButton(inv, p);
     }
 
     private void refreshCategoryEdit(Player p, String categoryKey) {
@@ -179,7 +170,6 @@ public class ShopUI implements Listener {
             inv.setItem(slot, buildMarketItem(it));
         }
         inv.setItem(BACK_SLOT, backButton());
-        addAuctionButton(inv, p);
     }
 
     // ===== item builders =====
@@ -302,9 +292,12 @@ public class ShopUI implements Listener {
 
         // В обычном режиме клики отменяем. В редакторе — разрешаем расстановку, но свои действия тоже перехватываем.
         if (!isEdit) {
-            e.setCancelled(true);
-            if (!market.isCooldownOk(p)) return;
-        }
+    // Покупка/продажа только по клику в верхнем окне магазина
+    if (e.getClickedInventory() == null || e.getClickedInventory() != top) return;
+
+    e.setCancelled(true);
+    if (!market.isCooldownOk(p)) return;
+}
 
         ItemStack clicked = e.getCurrentItem();
         if (clicked == null || clicked.getType() == Material.AIR) clicked = null;
