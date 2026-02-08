@@ -4,7 +4,6 @@ import me.livemarket.db.MarketDatabase;
 import me.livemarket.market.MarketService;
 import me.livemarket.ui.ShopUI;
 import me.livemarket.UpdateCommand;
-import me.livemarket.GenerateCommand;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
