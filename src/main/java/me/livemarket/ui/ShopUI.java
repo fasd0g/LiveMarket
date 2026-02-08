@@ -443,7 +443,6 @@ if (category != null && !it.getCategory().equalsIgnoreCase(category)) {
         // сразу обновляем GUI
         refreshCategory(p, category);
     }
-}
 private void tryAddItemFromInventory(Player p, ItemStack stack) {
     if (stack == null || stack.getType() == org.bukkit.Material.AIR) return;
     String cat = viewerCategories.get(p.getUniqueId());
