@@ -42,7 +42,6 @@ public class MarketService {
     private double maxStep;
     private double kDemand;
     private double sStock;
-    private double sellMultiplier;
     private long cooldownMs;
 
     private boolean sellPressureEnabled;

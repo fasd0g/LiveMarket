@@ -1,5 +1,5 @@
 name: LiveMarket
-version: 1.4.4
+version: 1.4.5
 main: me.livemarket.LiveMarketPlugin
 api-version: 1.21
 depend: [Vault]
