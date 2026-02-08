@@ -524,8 +524,8 @@ viewerCategories.put(p.getUniqueId(), null);
                 MarketItem existing = market.getItem(mat);
                 if (existing != null) {
                     EditField field = null;
-                    if (ct == ClickType.CONTROL_LEFT) field = EditField.BASE;
-                    else if (ct == ClickType.CONTROL_RIGHT) field = EditField.MIN;
+                    if (ct == ClickType.LEFT) field = EditField.BASE;
+                    else if (ct == ClickType.RIGHT) field = EditField.MIN;
                     else if (ct == ClickType.SHIFT_LEFT) field = EditField.MAX;
                     else if (ct == ClickType.MIDDLE) field = EditField.STOCK_TARGET;
 
