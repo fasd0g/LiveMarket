@@ -1,0 +1,13 @@
+# Здесь можно вручную переопределять названия предметов (RU).
+# Ключ = Material из Bukkit (например ENDER_PEARL), значение = отображаемое имя.
+# Если ключа нет — имя будет взято из встроенной локализации Minecraft (ru_ru) через GlobalTranslator.
+
+ENDER_PEARL: "Эндер-жемчуг"
+BREAD: "Хлеб"
+COOKED_BEEF: "Стейк"
+COPPER_INGOT: "Медный слиток"
+RAW_COPPER: "Необработанная медь"
+COPPER_BLOCK: "Блок меди"
+DIAMOND: "Алмаз"
+GOLD_INGOT: "Золотой слиток"
+IRON_INGOT: "Железный слиток"
