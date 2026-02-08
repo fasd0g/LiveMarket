@@ -1,4 +1,4 @@
-# LiveMarket (Paper 1.21.1 + Vault) — v1.3.3
+# LiveMarket (Paper 1.21.1 + Vault) — v1.3.4
 
 ## Фичи
 - `/shop` GUI: 6 категорий (armor/food/tools/ores/blocks/misc)
