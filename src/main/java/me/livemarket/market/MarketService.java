@@ -156,24 +156,6 @@ public class MarketService {
         }
         return out;
     }
-
-    
-private String NameUtil.ru(org.bukkit.Material mat) {
-    String s = mat.name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
-    StringBuilder out = new StringBuilder();
-    boolean cap = true;
-    for (char c : s.toCharArray()) {
-        if (cap && Character.isLetter(c)) {
-            out.append(Character.toUpperCase(c));
-            cap = false;
-        } else {
-            out.append(c);
-        }
-        if (c == ' ') cap = true;
-    }
-    return out.toString();
-}
-
 public String format(double v) {
         return String.format("$%.2f", v);
     }

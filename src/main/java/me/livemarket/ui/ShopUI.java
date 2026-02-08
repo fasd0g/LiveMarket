@@ -179,7 +179,8 @@ viewerCategories.put(p.getUniqueId(), null);
         ItemStack is = new ItemStack(cat.icon());
         ItemMeta meta = is.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(\"§a\" + NameUtil.ru(cat.title()));
+            // title уже хранится в конфиге как строка (обычно по-русски), поэтому не прогоняем через NameUtil
+            meta.setDisplayName("§a" + cat.title());
             // Убираем отображение характеристик (броня/урон/скорость) у категорий
             meta.addItemFlags(
                     ItemFlag.HIDE_ATTRIBUTES,
