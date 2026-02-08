@@ -21,7 +21,7 @@ public class UpdateCommand implements CommandExecutor {
             return true;
         }
 
-        market.runDailyUpdate();
+        market.forceDailyUpdate();
         sender.sendMessage("§aРынок обновлён вручную.");
         return true;
     }

@@ -226,7 +226,13 @@ public class MarketService {
         return Math.min(ticks, Integer.MAX_VALUE);
     }
 
-    private void runDailyUpdate() {
+    
+/** Принудительно выполнить обновление рынка (для админ-команд/тестов). */
+public void forceDailyUpdate() {
+    runDailyUpdate();
+}
+
+private void runDailyUpdate() {
         for (MarketItem it : items.values()) {
             updatePrice(it);
             db.upsertItem(it.getMaterial().name(), it.getPrice(), it.getStock());
@@ -325,7 +331,7 @@ private void announceDailyDeals() {
     for (var en : dailyDealBonus.entrySet()) {
         MarketItem it = items.get(en.getKey());
         if (it == null) continue;
-        String nameRu = plugin.getTranslator().nameRu(en.getKey());
+        String nameRu = formatMaterialName(en.getKey());
         int pct = (int) Math.round(en.getValue() * 100.0);
         lines.add("§e- " + nameRu + " §7(+" + pct + "% к покупке)");
     }
