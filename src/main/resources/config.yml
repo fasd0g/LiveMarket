@@ -1,0 +1,186 @@
+settings:
+  economy:
+    sellMultiplier: 0.65
+    dailySellLimitGlobal: 384
+    # Лимит покупок на игрока в сутки (сбрасывается при ежедневном обновлении)
+    dailyBuyLimitPerPlayerPerItem: 64
+    dailyBuyLimitPerPlayerTotal: 0
+
+  dailyDeal:
+    enabled: true
+    count: 3
+    bonusMin: 0.20
+    bonusMax: 0.40
+    announce: true
+    prefix: "§6[Рынок]"
+
+  gui:
+    mainTitle: "§aЖивой рынок"
+    categoryTitlePrefix: "§aРынок: §f"
+    size: 54
+
+    auctionButton:
+      enabled: true
+      slot: 53
+      icon: "GOLD_INGOT"
+      name: "§6Аукцион"
+      lore:
+        - "§7Открыть аукцион"
+        - "§eНажми чтобы выполнить /ah"
+
+  updateTime:
+    zoneId: "Europe/Moscow"
+    hour: 20
+    minute: 0
+
+  update:
+    maxStepPerUpdate: 0.08
+    kDemand: 0.45
+    sStock: 0.25
+    sellMultiplier: 0.85
+    clickCooldownMs: 250
+
+    sellPressure:
+      enabled: true
+      k: 0.18
+      minMultiplier: 0.55
+
+    instantAdjustment:
+      enabled: true
+      maxStepPerTrade: 0.01
+
+  messages:
+    marketUpdateBroadcast: "§a[Рынок] §fРынок обновлён! Цены пересчитаны."
+
+permissionsDescriptions:
+  livemarket.shop.open: "Доступ к /shop (открыть GUI рынка)"
+  livemarket.price: "Доступ к /price <material>"
+  livemarket.buy: "Разрешает покупать предметы в рынке"
+  livemarket.sell: "Разрешает продавать предметы в рынок (учитывает прочность)"
+  livemarket.auction: "Разрешает кнопку перехода на аукцион (/ah) из магазина"
+  livemarket.category.armor: "Доступ к категории Броня"
+  livemarket.category.food: "Доступ к категории Еда"
+  livemarket.category.tools: "Доступ к категории Инструменты"
+  livemarket.category.ores: "Доступ к категории Руды"
+  livemarket.category.blocks: "Доступ к категории Блоки"
+  livemarket.category.misc: "Доступ к категории Прочее"
+  livemarket.shop.edit: "Открыть рынок в режиме редактирования (/shopedit)"
+  livemarket.admin: "Админ-доступ (на будущее)"
+
+categories:
+  armor:
+    title: "Броня"
+    icon: "DIAMOND_CHESTPLATE"
+    slot: 20
+    permission: "livemarket.category.armor"
+  food:
+    title: "Еда"
+    icon: "COOKED_BEEF"
+    slot: 21
+    permission: "livemarket.category.food"
+  tools:
+    title: "Инструменты"
+    icon: "DIAMOND_PICKAXE"
+    slot: 22
+    permission: "livemarket.category.tools"
+  ores:
+    title: "Руды"
+    icon: "IRON_INGOT"
+    slot: 23
+    permission: "livemarket.category.ores"
+  blocks:
+    title: "Блоки"
+    icon: "BRICKS"
+    slot: 24
+    permission: "livemarket.category.blocks"
+  misc:
+    title: "Прочее"
+    icon: "ENDER_PEARL"
+    slot: 25
+    permission: "livemarket.category.misc"
+
+items:
+  DIAMOND:
+    category: "ores"
+    base: 120.0
+    min: 50.0
+    max: 450.0
+    stock: 20
+    stockTarget: 120
+    slot: 10
+
+  IRON_INGOT:
+    category: "ores"
+    base: 25.0
+    min: 8.0
+    max: 90.0
+    stock: 200
+    stockTarget: 800
+    slot: 11
+
+  BREAD:
+    category: "food"
+    base: 5.0
+    min: 1.0
+    max: 18.0
+    stock: 128
+    stockTarget: 512
+    slot: 10
+
+  COOKED_BEEF:
+    category: "food"
+    base: 12.0
+    min: 3.0
+    max: 35.0
+    stock: 64
+    stockTarget: 256
+    slot: 11
+
+  DIAMOND_CHESTPLATE:
+    category: "armor"
+    base: 900.0
+    min: 400.0
+    max: 2500.0
+    stock: 2
+    stockTarget: 10
+    slot: 10
+
+  DIAMOND_PICKAXE:
+    category: "tools"
+    base: 500.0
+    min: 220.0
+    max: 1600.0
+    stock: 3
+    stockTarget: 12
+    slot: 10
+
+  BRICKS:
+    category: "blocks"
+    base: 4.0
+    min: 1.0
+    max: 15.0
+    stock: 256
+    stockTarget: 2000
+    slot: 10
+
+  ENDER_PEARL:
+    category: "misc"
+    base: 60.0
+    min: 15.0
+    max: 200.0
+    stock: 8
+    stockTarget: 40
+    slot: 10
+
+
+# ===== Справка =====
+help:
+  commands:
+    - "/shop — открыть рынок"
+    - "/price <предмет> — показать цену предмета"
+    - "/shopedit — открыть рынок в режиме редактирования (добавление/удаление товаров)"
+  permissions:
+    - "livemarket.shop — доступ к /shop"
+    - "livemarket.category.<key> — доступ к категории (пример: livemarket.category.food)"
+    - "livemarket.price — доступ к /price"
+    - "livemarket.shop.edit — доступ к /shopedit (редактор ассортимента)"
